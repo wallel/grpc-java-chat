@@ -13,7 +13,6 @@ public class RoleServerInterceptor implements ServerInterceptor {
     @SuppressWarnings("unchecked")
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-        logger.info("call message full name :{}",call.getMethodDescriptor().getFullMethodName());
         Context ctx = Context.current();
         if(!"me.lecoding.grpclearning.ChatRoom/Login".equals(call.getMethodDescriptor().getFullMethodName())){
             String token = headers.get(Constant.HEADER_ROLE);
