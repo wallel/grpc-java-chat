@@ -1,6 +1,7 @@
 package me.lecoding.grpclearning.service;
 
 import com.google.common.collect.Sets;
+import com.google.protobuf.util.Timestamps;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import me.lecoding.grpclearning.Chat;
@@ -30,6 +31,7 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
 
         boardCast(Chat.ChatResponse
             .newBuilder()
+            .setTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
             .setRoleLogin(
                 Chat.ChatResponse.Login
                     .newBuilder()
@@ -65,6 +67,7 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
                 logger.info("got message from {} :{}",user.getUserName(),value.getMessage());
                 boardCast(Chat.ChatResponse
                         .newBuilder()
+                        .setTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
                         .setRoleMessage(
                                 Chat.ChatResponse.Message
                                         .newBuilder()
@@ -90,6 +93,7 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
         clients.remove(responseObserver);
         boardCast(Chat.ChatResponse
                 .newBuilder()
+                .setTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
                 .setRoleLogout(
                         Chat.ChatResponse.Logout
                                 .newBuilder()
