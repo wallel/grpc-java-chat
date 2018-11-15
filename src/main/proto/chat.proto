@@ -1,0 +1,46 @@
+syntax ="proto3";
+
+package me.lecoding.grpclearning;
+
+import "google/protobuf/timestamp.proto";
+
+service ChatRoom{
+    rpc Login(LoginRequest) returns(LoginResponse);
+    rpc Logout(LogoutRequest) returns(LogoutResponse);
+    rpc Chat(stream ChatRequest) returns(stream ChatResponse);
+}
+message LoginRequest{
+    string name = 1;
+}
+message LoginResponse{
+    string token = 1;
+}
+
+message LogoutRequest{
+}
+message LogoutResponse{
+}
+
+message ChatRequest{
+    string message =1;
+}
+message ChatResponse{
+    google.protobuf.Timestamp  timestamp =1;
+    oneof event{
+        Login role_login = 2;
+        Logout role_logout=3;
+        Message role_message=4;
+        ShutDown server_shutdown=5;
+    }
+    message Login{
+        string name = 1;
+    }
+    message Logout{
+        string name=1;
+    }
+    message Message{
+        string name = 1;
+        string msg = 2;
+    }
+    message ShutDown{}
+}

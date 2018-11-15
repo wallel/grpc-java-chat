@@ -1,0 +1,86 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.7'
+    }
+}
+
+plugins {
+    id 'java'
+    id "com.google.protobuf" version "0.8.7"
+    id "idea"
+}
+
+group 'me.lecoding'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    compile 'io.grpc:grpc-netty-shaded:1.16.1'
+    compile 'io.grpc:grpc-protobuf:1.16.1'
+    compile 'io.grpc:grpc-stub:1.16.1'
+    compile 'com.google.protobuf:protobuf-java-util:3.5.1'
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'org.apache.logging.log4j:log4j-core:2.11.1'
+    compile 'org.apache.logging.log4j:log4j-api:2.11.1'
+    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.1'
+    testCompile 'org.spockframework.spock:spock-core:spock-1.2'
+}
+
+
+// protobuf gen code
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.6.1'
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.16.1"
+        }
+    }
+    generateProtoTasks {
+        ofSourceSet('main')*.plugins {
+            grpc { }
+        }
+    }
+}
+
+// idea ide
+def generatedJava = file("${protobuf.generatedFilesBaseDir}/main/java")
+def generatedGrpc = file("${protobuf.generatedFilesBaseDir}/main/grpc")
+idea {
+    module {
+        generatedSourceDirs += generatedJava
+        generatedSourceDirs += generatedGrpc
+    }
+}
+
+task serverJar(type:Jar){
+    manifest {
+        attributes "Main-Class":"me.lecoding.grpclearning.ChatServer"
+    }
+    from{
+        configurations.compile.collect{it.isDirectory()?it:zipTree(it)}
+    }
+    baseName = "chatServer"
+    with jar
+}
+
+task clientJar(type:Jar){
+    manifest {
+        attributes "Main-Class":"me.lecoding.grpclearning.ChatClient"
+    }
+    from{
+        configurations.compile.collect{it.isDirectory()?it:zipTree(it)}
+    }
+    baseName = "chatClient"
+    with jar
+}
