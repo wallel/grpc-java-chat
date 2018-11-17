@@ -1,7 +1,9 @@
 package me.lecoding.grpclearning.interceptor;
 
 import io.grpc.*;
+import org.springframework.stereotype.Component;
 
+@Component
 public class RoleClientInterceptor implements ClientInterceptor {
     @Override
     public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {

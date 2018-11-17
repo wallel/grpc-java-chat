@@ -13,22 +13,24 @@ import me.lecoding.grpclearning.user.UserService;
 import org.lognet.springboot.grpc.GRpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Objects;
 import java.util.Set;
 
 @GRpcService(interceptors = {RoleServerInterceptor.class})
 public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
+    private UserService userService;
     private static Logger logger = LoggerFactory.getLogger(ChatRoomServiceImpl.class);
     private Set<StreamObserver<Chat.ChatResponse>> clients = Sets.newConcurrentHashSet();
 
     @Override
     public void login(Chat.LoginRequest request, StreamObserver<Chat.LoginResponse> responseObserver) {
-        if(UserService.getInstance().checkLoged(request.getName())){
+        if(userService.checkLoged(request.getName())){
             responseObserver.onError(Status.fromCode(Status.ALREADY_EXISTS.getCode()).asRuntimeException());
             return;
         }
-        String token = UserService.getInstance().addLogedUser(new User(request.getName()));
+        String token = userService.addLogedUser(new User(request.getName()));
         responseObserver.onNext(Chat.LoginResponse.newBuilder().setToken(token).build());
         responseObserver.onCompleted();
 
@@ -48,7 +50,7 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
         User user = Constant.CONTEXT_ROLE.get();
         if(!Objects.isNull(user)) {
             logger.info("user logout:{}", user.getUserName());
-            UserService.getInstance().logout(user);
+            userService.logout(user);
         }
         responseObserver.onNext(Chat.LogoutResponse.newBuilder().build());
         responseObserver.onCompleted();
@@ -108,5 +110,10 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
         for(StreamObserver<Chat.ChatResponse> resp : clients){
             resp.onNext(msg);
         }
+    }
+
+    @Autowired
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 }

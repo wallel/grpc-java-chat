@@ -2,6 +2,7 @@ package me.lecoding.grpclearning.user;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.Set;
@@ -10,14 +11,8 @@ import java.util.UUID;
 /**
  * Dummy UserService
  */
+@Service
 public class UserService {
-    private static UserService instance;
-    static {
-        instance = new UserService();
-    }
-    public static UserService getInstance(){
-        return instance;
-    }
     private Map<String,User> token2User = Maps.newHashMap();
     private Set<String> LogedUsers = Sets.newHashSet();
 

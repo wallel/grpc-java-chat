@@ -6,8 +6,12 @@ import me.lecoding.grpclearning.user.User;
 import me.lecoding.grpclearning.user.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class RoleServerInterceptor implements ServerInterceptor {
+    private UserService userService;
     private static Logger logger = LoggerFactory.getLogger(RoleServerInterceptor.class);
     private static final ServerCall.Listener NOOP_LISTENER = new ServerCall.Listener() {};
     @SuppressWarnings("unchecked")
@@ -20,7 +24,7 @@ public class RoleServerInterceptor implements ServerInterceptor {
                 call.close(Status.UNAUTHENTICATED.withDescription("need login first!"),headers);
                 return NOOP_LISTENER;
             }
-            User user = UserService.getInstance().findUserByToken(token);
+            User user = userService.findUserByToken(token);
             if(user == null){
                 call.close(Status.UNAUTHENTICATED.withDescription("token error!"),headers);
                 return NOOP_LISTENER;
@@ -28,5 +32,10 @@ public class RoleServerInterceptor implements ServerInterceptor {
             ctx = ctx.withValue(Constant.CONTEXT_ROLE,user);
         }
         return Contexts.interceptCall(ctx,call,headers,next);
+    }
+
+    @Autowired
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 }
