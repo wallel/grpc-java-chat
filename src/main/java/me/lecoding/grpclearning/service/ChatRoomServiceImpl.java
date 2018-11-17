@@ -7,14 +7,17 @@ import io.grpc.stub.StreamObserver;
 import me.lecoding.grpclearning.Chat;
 import me.lecoding.grpclearning.ChatRoomGrpc;
 import me.lecoding.grpclearning.common.Constant;
+import me.lecoding.grpclearning.interceptor.RoleServerInterceptor;
 import me.lecoding.grpclearning.user.User;
 import me.lecoding.grpclearning.user.UserService;
+import org.lognet.springboot.grpc.GRpcService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Set;
 
+@GRpcService(interceptors = {RoleServerInterceptor.class})
 public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
     private static Logger logger = LoggerFactory.getLogger(ChatRoomServiceImpl.class);
     private Set<StreamObserver<Chat.ChatResponse>> clients = Sets.newConcurrentHashSet();

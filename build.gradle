@@ -1,17 +1,26 @@
 buildscript {
+    ext {
+        springBootVersion = '2.1.0.RELEASE'
+    }
     repositories {
         mavenCentral()
     }
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.7'
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
     }
 }
+
+
 
 plugins {
     id 'java'
     id "com.google.protobuf" version "0.8.7"
     id "idea"
 }
+
+apply plugin: "org.springframework.boot"
+apply plugin: "io.spring.dependency-management"
 
 group 'me.lecoding'
 version '1.0-SNAPSHOT'
@@ -24,17 +33,19 @@ repositories {
 }
 
 dependencies {
+    implementation('org.springframework.boot:spring-boot-starter')
+    compile ('io.github.lognet:grpc-spring-boot-starter:3.0.0')
+    compile 'org.springframework.boot:spring-boot-starter-log4j2'
     compile 'io.grpc:grpc-netty-shaded:1.16.1'
     compile 'io.grpc:grpc-protobuf:1.16.1'
     compile 'io.grpc:grpc-stub:1.16.1'
     compile 'com.google.protobuf:protobuf-java-util:3.5.1'
-    compile 'org.slf4j:slf4j-api:1.7.25'
-    compile 'org.apache.logging.log4j:log4j-core:2.11.1'
-    compile 'org.apache.logging.log4j:log4j-api:2.11.1'
-    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.1'
     testCompile 'org.spockframework.spock:spock-core:spock-1.2'
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
 }
-
+configurations{
+    all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+}
 
 // protobuf gen code
 protobuf {
