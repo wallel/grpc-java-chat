@@ -1,0 +1,58 @@
+syntax ="proto3";
+
+package me.lecoding.grpclearning.api;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/empty.proto";
+
+service UserService{
+      rpc CreateUser(CreateUserRequest) returns(User);
+      rpc ListUsers(ListUsersRequest) returns(ListUsersResponse);
+      rpc SearchUsers(SearchUsersRequest) returns(SearchUsersResponse);
+      rpc GetUser(GetUserRequest) returns(User);
+      rpc UpdateUser(UpdateUserRequest) returns(User);
+      rpc DeleteUser(DeleteUserRequest) returns(google.protobuf.Empty);
+}
+
+message CreateUserRequest{
+    string username=1;
+    string nickname=2;
+    string password=3;
+}
+message ListUsersRequest{
+    int32 page_size =1;
+    string page_token=2;
+}
+message ListUsersResponse{
+    repeated User users=1;
+    string next_page_token=2;
+}
+message SearchUsersRequest{
+    repeated string ids=1;
+}
+message SearchUsersResponse{
+    repeated User user =1;
+}
+message UpdateUserRequest{
+    User user =1;
+    google.protobuf.FieldMask  field_mask=2;
+}
+message GetUserRequest{
+    string id=1;
+}
+message DeleteUserRequest{
+    string id=1;
+}
+
+message User{
+    string id=1;
+
+    string username=2;
+    string nickname=3;
+    string email=4;
+    repeated string roles=5;
+
+    google.protobuf.Timestamp create_time=6;
+    google.protobuf.Timestamp update_time=7;
+}

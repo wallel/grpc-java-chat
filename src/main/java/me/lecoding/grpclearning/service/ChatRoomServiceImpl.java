@@ -7,7 +7,9 @@ import io.grpc.stub.StreamObserver;
 import me.lecoding.grpclearning.Chat;
 import me.lecoding.grpclearning.ChatRoomGrpc;
 import me.lecoding.grpclearning.common.Constant;
+import me.lecoding.grpclearning.common.JWTUtils;
 import me.lecoding.grpclearning.interceptor.RoleServerInterceptor;
+import me.lecoding.grpclearning.manager.OnlineUserManager;
 import me.lecoding.grpclearning.user.User;
 import me.lecoding.grpclearning.user.UserService;
 import org.lognet.springboot.grpc.GRpcService;
@@ -21,19 +23,22 @@ import java.util.Set;
 @GRpcService(interceptors = {RoleServerInterceptor.class})
 public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
     private UserService userService;
+    private OnlineUserManager onlineUserManager;
+    private JWTUtils jwtUtils;
     private static Logger logger = LoggerFactory.getLogger(ChatRoomServiceImpl.class);
     private Set<StreamObserver<Chat.ChatResponse>> clients = Sets.newConcurrentHashSet();
 
     @Override
     public void login(Chat.LoginRequest request, StreamObserver<Chat.LoginResponse> responseObserver) {
-        if(userService.checkLoged(request.getName())){
-            responseObserver.onError(Status.fromCode(Status.ALREADY_EXISTS.getCode()).asRuntimeException());
+        User user= userService.checkUser(request.getName(),request.getPassword());
+        if(Objects.isNull(user)){
+            responseObserver.onError(Status.fromCode(Status.UNAUTHENTICATED.getCode()).withDescription("uasername or password error").asRuntimeException());
             return;
         }
-        String token = userService.addLogedUser(new User(request.getName()));
-        responseObserver.onNext(Chat.LoginResponse.newBuilder().setToken(token).build());
+        onlineUserManager.addUser(user);
+        responseObserver.onNext(Chat.LoginResponse.newBuilder().setToken(jwtUtils.generateToken(user.getId())).build());
         responseObserver.onCompleted();
-
+        logger.info("user {} login OK!",request.getName());
         boardCast(Chat.ChatResponse
             .newBuilder()
             .setTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
@@ -49,8 +54,8 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
     public void logout(Chat.LogoutRequest request, StreamObserver<Chat.LogoutResponse> responseObserver) {
         User user = Constant.CONTEXT_ROLE.get();
         if(!Objects.isNull(user)) {
-            logger.info("user logout:{}", user.getUserName());
-            userService.logout(user);
+            logger.info("user logout:{}", user.getUsername());
+            onlineUserManager.removeUserById(user.getId());
         }
         responseObserver.onNext(Chat.LogoutResponse.newBuilder().build());
         responseObserver.onCompleted();
@@ -69,7 +74,7 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
         return new StreamObserver<Chat.ChatRequest>() {
             @Override
             public void onNext(Chat.ChatRequest value) {
-                logger.info("got message from {} :{}",user.getUserName(),value.getMessage());
+                logger.info("got message from {} :{}",user.getNickname(),value.getMessage());
                 boardCast(Chat.ChatResponse
                         .newBuilder()
                         .setTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
@@ -77,14 +82,14 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
                                 Chat.ChatResponse.Message
                                         .newBuilder()
                                         .setMsg(value.getMessage())
-                                        .setName(user.getUserName())
+                                        .setName(user.getNickname())
                                         .build()
                         ).build());
             }
 
             @Override
             public void onError(Throwable t) {
-                logger.error("got error from {}",user.getUserName(),t);
+                logger.error("got error from {}",user.getNickname(),t);
                 userLogout(responseObserver,user);
             }
             @Override
@@ -102,7 +107,7 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
                 .setRoleLogout(
                         Chat.ChatResponse.Logout
                                 .newBuilder()
-                                .setName(user.getUserName())
+                                .setName(user.getNickname())
                                 .build()
                 ).build());
     }
@@ -115,5 +120,13 @@ public class ChatRoomServiceImpl extends ChatRoomGrpc.ChatRoomImplBase {
     @Autowired
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+    @Autowired
+    public void setJwtUtils(JWTUtils jwtUtils) {
+        this.jwtUtils = jwtUtils;
+    }
+    @Autowired
+    public void setOnlineUserManager(OnlineUserManager onlineUserManager) {
+        this.onlineUserManager = onlineUserManager;
     }
 }
