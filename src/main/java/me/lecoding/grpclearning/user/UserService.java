@@ -3,12 +3,12 @@ package me.lecoding.grpclearning.user;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.protobuf.Empty;
-import com.google.protobuf.Option;
 import com.google.protobuf.util.Timestamps;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import me.lecoding.grpclearning.api.UserOuterClass;
 import me.lecoding.grpclearning.api.UserServiceGrpc;
+import me.lecoding.grpclearning.interceptor.ExceptionInterceptor;
 import org.lognet.springboot.grpc.GRpcService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,7 +24,7 @@ import java.util.UUID;
 /**
  * UserService
  */
-@GRpcService
+@GRpcService(interceptors = {ExceptionInterceptor.class})
 public class UserService extends UserServiceGrpc.UserServiceImplBase {
     private UserRepository userRepository;
     private Gson gson;
@@ -45,7 +45,8 @@ public class UserService extends UserServiceGrpc.UserServiceImplBase {
             responseObserver.onNext(toClientUser(user.get()));
             responseObserver.onCompleted();
         }else{
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("user not exist!").asRuntimeException());
+            //responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("user not exist!").asRuntimeException());
+            throw new RuntimeException("user not exist");
         }
     }
 
